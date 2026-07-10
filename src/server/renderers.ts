@@ -66,7 +66,7 @@ export function renderClockCalendar(now = new Date()): PixelFrame {
   const date = `${String(now.getDate()).padStart(2, "0")} ${now.toLocaleString("en-US", { month: "short" }).toUpperCase()}`;
   const weekday = now.toLocaleString("en-US", { weekday: "long" }).toUpperCase();
 
-  drawText(frame, time, 2, 2);
+  drawText(frame, time, 2, 2, 1);
   drawText(frame, date, 1, 25);
   drawText(frame, weekday, 1, 37);
   return frame;
@@ -161,9 +161,9 @@ export function renderMode(mode: DisplayMode, now = new Date()): PixelFrame | An
   return decodeGif(mode.data);
 }
 
-function drawText(frame: PixelFrame, text: string, scale: number, y: number): void {
+function drawText(frame: PixelFrame, text: string, scale: number, y: number, spacing = scale): void {
   const characters = [...text.toUpperCase()];
-  const width = characters.reduce((total, char) => total + (FONT[char] ?? FONT[" "]!).length * scale + scale, -scale);
+  const width = characters.reduce((total, char) => total + (FONT[char] ?? FONT[" "]!)[0]!.length * scale + spacing, -spacing);
   let x = Math.floor((MATRIX_WIDTH - width) / 2);
   for (const char of characters) {
     const glyph = FONT[char] ?? FONT[" "]!;
@@ -175,6 +175,6 @@ function drawText(frame: PixelFrame, text: string, scale: number, y: number): vo
         }
       }
     }));
-    x += (glyph.length + 1) * scale;
+    x += glyph[0]!.length * scale + spacing;
   }
 }

@@ -31,4 +31,8 @@ test("renders the clock, date, and weekday", () => {
   const frame = renderClockCalendar(new Date(2026, 6, 10, 9, 5));
   const lit = frame.pixels.filter((value) => value > 0);
   assert.ok(lit.length > 0);
+  for (let y = 2; y < 16; y += 1) {
+    assert.equal(frame.pixels[(y * frame.width) * 3], 0);
+    assert.equal(frame.pixels[(y * frame.width + frame.width - 1) * 3], 0);
+  }
 });
