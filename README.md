@@ -2,15 +2,33 @@
 
 A small Node.js web server and Tailwind UI for controlling a 64x64 RGB LED matrix connected to a Raspberry Pi 3 through an Adafruit RGB Matrix HAT.
 
+## Display modes
+
+The UI supports three mutually exclusive modes:
+
+- **Static text**: centered white bitmap text, limited to 64 characters.
+- **Static image**: PNG or JPEG, aspect-fit into the matrix with black letterboxing.
+- **Animated image**: GIF playback using the embedded frame timing and the same aspect-fit behavior.
+
+Selecting a new mode replaces the current display. Uploads are held in memory for the active display and are not persisted. The upload limit is 5 MB.
+
 ## Development
 
 ```bash
 npm install
-copy .env.example .env
+cp .env.example .env
 npm run dev
 ```
 
 Open http://localhost:5173. Development uses mock mode by default.
+
+Run the automated checks with:
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
 
 ## Raspberry Pi deployment
 
@@ -24,7 +42,7 @@ npm run build
 npm start
 ```
 
-The optional `rpi-led-matrix` dependency uses the Adafruit HAT GPIO mapping. Run the process with the permissions required by the matrix driver.
+The optional `rpi-led-matrix` dependency uses the Adafruit HAT GPIO mapping. Image decoding is implemented with JavaScript libraries to avoid requiring native image packages on Raspberry Pi OS. Run the process with the permissions required by the matrix driver.
 
 Environment variables:
 
