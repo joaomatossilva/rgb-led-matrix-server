@@ -1,3 +1,4 @@
+import "dotenv/config";
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";

@@ -37,12 +37,14 @@ Install Node.js 20+ on the Pi, clone the repository, and run:
 ```bash
 npm ci
 cp .env.example .env
-# Set MATRIX_MOCK=false in .env
+# Set MATRIX_MOCK=false in .env on the Raspberry Pi
 npm run build
 npm start
 ```
 
 The optional `rpi-led-matrix` dependency uses the Adafruit HAT GPIO mapping. Image decoding is implemented with JavaScript libraries to avoid requiring native image packages on Raspberry Pi OS. Run the process with the permissions required by the matrix driver.
+
+The server loads `.env` automatically. `MATRIX_MOCK=false` requires the `rpi-led-matrix` package and a working Raspberry Pi/Adafruit HAT; if the driver cannot initialize, startup fails instead of silently falling back to mock mode.
 
 Environment variables:
 
