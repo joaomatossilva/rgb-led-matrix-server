@@ -34,5 +34,9 @@ export type AnimatedImageMode = {
   data: Buffer;
 };
 
-export type DisplayMode = StaticTextMode | StaticImageMode | AnimatedImageMode;
+export type ClockCalendarMode = {
+  type: "clock-calendar";
+};
+
+export type DisplayMode = StaticTextMode | StaticImageMode | AnimatedImageMode | ClockCalendarMode;
 export type ActiveMode = { type: DisplayMode["type"]; label: string } | null;

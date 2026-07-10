@@ -1,11 +1,12 @@
 import type { MatrixHardware } from "./hardware.js";
-import { decodeGif, renderMode } from "./renderers.js";
+import { decodeGif, renderClockCalendar, renderMode } from "./renderers.js";
 import type { ActiveMode, DisplayMode } from "./types.js";
 import { MAX_TEXT_LENGTH, MAX_UPLOAD_BYTES } from "./types.js";
 
 export class DisplayService {
   private activeMode: ActiveMode = null;
   private animationTimer?: NodeJS.Timeout;
+  private clockTimer?: NodeJS.Timeout;
   private generation = 0;
 
   constructor(private readonly hardware: MatrixHardware) {}
@@ -32,26 +33,44 @@ export class DisplayService {
     this.replace({ type: "animated-image", filename, mimeType: "image/gif", data });
   }
 
+  showClock(): void {
+    this.replace({ type: "clock-calendar" });
+  }
+
   clear(): void {
-    this.stopAnimation();
+    this.stopTimers();
     this.activeMode = null;
     this.hardware.clear();
   }
 
   stop(): void {
-    this.stopAnimation();
+    this.stopTimers();
   }
 
   private replace(mode: DisplayMode): void {
-    this.stopAnimation();
+    this.stopTimers();
     const generation = ++this.generation;
     const rendered = renderMode(mode);
-    this.activeMode = { type: mode.type, label: mode.type === "static-text" ? mode.text : mode.filename };
+    this.activeMode = {
+      type: mode.type,
+      label: mode.type === "static-text" ? mode.text : mode.type === "clock-calendar" ? "Clock / calendar" : mode.filename
+    };
     if (Array.isArray(rendered)) {
       this.playAnimation(rendered, generation, 0);
+    } else if (mode.type === "clock-calendar") {
+      this.hardware.renderFrame(renderClockCalendar());
+      this.playClock(mode, generation);
     } else {
       this.hardware.renderFrame(rendered);
     }
+  }
+
+  private playClock(mode: DisplayMode, generation: number): void {
+    this.clockTimer = setTimeout(() => {
+      if (generation !== this.generation || mode.type !== "clock-calendar") return;
+      this.hardware.renderFrame(renderClockCalendar());
+      this.playClock(mode, generation);
+    }, 1000);
   }
 
   private playAnimation(frames: ReturnType<typeof decodeGif>, generation: number, index: number): void {
@@ -61,10 +80,12 @@ export class DisplayService {
     this.animationTimer = setTimeout(() => this.playAnimation(frames, generation, (index + 1) % frames.length), current.delayMs);
   }
 
-  private stopAnimation(): void {
+  private stopTimers(): void {
     this.generation += 1;
     if (this.animationTimer) clearTimeout(this.animationTimer);
+    if (this.clockTimer) clearTimeout(this.clockTimer);
     this.animationTimer = undefined;
+    this.clockTimer = undefined;
   }
 
   private assertUpload(filename: string, mimeType: string, data: Buffer): void {

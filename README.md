@@ -4,11 +4,12 @@ A small Node.js web server and Tailwind UI for controlling a 64x64 RGB LED matri
 
 ## Display modes
 
-The UI supports three mutually exclusive modes:
+The UI supports four mutually exclusive modes:
 
 - **Static text**: centered white bitmap text, limited to 64 characters.
 - **Static image**: PNG or JPEG, aspect-fit into the matrix with black letterboxing.
 - **Animated image**: GIF playback using the embedded frame timing and the same aspect-fit behavior.
+- **Clock / calendar**: current local time in larger text, followed by the date and day of the week.
 
 Selecting a new mode replaces the current display. Uploads are held in memory for the active display and are not persisted. The upload limit is 5 MB.
 

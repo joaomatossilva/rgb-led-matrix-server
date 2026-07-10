@@ -81,6 +81,11 @@ export async function buildApp(hardware: MatrixHardware = createMatrixHardware()
     }
   });
 
+  app.post("/api/matrix/modes/clock-calendar", async () => {
+    display.showClock();
+    return { mode: display.mode };
+  });
+
   app.post("/api/matrix/clear", async () => {
     display.clear();
     return { cleared: true };

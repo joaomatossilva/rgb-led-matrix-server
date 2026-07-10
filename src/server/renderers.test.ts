@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fitImage, renderText } from "./renderers.js";
+import { fitImage, renderClockCalendar, renderText } from "./renderers.js";
 
 test("renders centered white text on a 64x64 frame", () => {
   const frame = renderText("A");
@@ -25,4 +25,10 @@ test("fits an image without stretching and keeps black letterboxing", () => {
   assert.equal(frame.pixels[center], 255);
   const corner = 0;
   assert.equal(frame.pixels[corner], 0);
+});
+
+test("renders the clock, date, and weekday", () => {
+  const frame = renderClockCalendar(new Date(2026, 6, 10, 9, 5));
+  const lit = frame.pixels.filter((value) => value > 0);
+  assert.ok(lit.length > 0);
 });

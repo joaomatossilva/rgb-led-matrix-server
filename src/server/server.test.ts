@@ -29,3 +29,11 @@ test("rejects an empty text mode", async () => {
   assert.equal(response.statusCode, 400);
   await app.close();
 });
+
+test("activates the clock and calendar mode", async () => {
+  const app = await buildApp(new MockMatrixHardware());
+  const response = await app.inject({ method: "POST", url: "/api/matrix/modes/clock-calendar" });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.json().mode, { type: "clock-calendar", label: "Clock / calendar" });
+  await app.close();
+});

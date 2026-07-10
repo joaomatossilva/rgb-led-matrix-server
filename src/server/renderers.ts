@@ -46,7 +46,8 @@ const FONT: Record<string, string[]> = {
   "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
   "9": ["01110", "10001", "10001", "01111", "00001", "00001", "01110"],
   "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
-  ".": ["00000", "00000", "00000", "00000", "00000", "00110", "00110"]
+  ".": ["00000", "00000", "00000", "00000", "00000", "00110", "00110"],
+  ":": ["00000", "00110", "00110", "00000", "00110", "00110", "00000"]
 };
 
 export function createBlankFrame(): PixelFrame {
@@ -55,18 +56,19 @@ export function createBlankFrame(): PixelFrame {
 
 export function renderText(text: string): PixelFrame {
   const frame = createBlankFrame();
-  const characters = [...text.toUpperCase()];
-  const width = characters.reduce((total, char) => total + (FONT[char] ?? FONT[" "]!).length + 1, -1);
-  const startX = Math.max(0, Math.floor((MATRIX_WIDTH - width) / 2));
-  const startY = Math.floor((MATRIX_HEIGHT - 7) / 2);
-  let x = startX;
-  for (const char of characters) {
-    const glyph = FONT[char] ?? FONT[" "]!;
-    glyph.forEach((row, y) => [...row].forEach((pixel, glyphX) => {
-      if (pixel === "1") setPixel(frame, x + glyphX, startY + y, 255, 255, 255);
-    }));
-    x += glyph.length + 1;
-  }
+  drawText(frame, text, 1, Math.floor((MATRIX_HEIGHT - 7) / 2));
+  return frame;
+}
+
+export function renderClockCalendar(now = new Date()): PixelFrame {
+  const frame = createBlankFrame();
+  const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const date = `${String(now.getDate()).padStart(2, "0")} ${now.toLocaleString("en-US", { month: "short" }).toUpperCase()}`;
+  const weekday = now.toLocaleString("en-US", { weekday: "long" }).toUpperCase();
+
+  drawText(frame, time, 2, 2);
+  drawText(frame, date, 1, 25);
+  drawText(frame, weekday, 1, 37);
   return frame;
 }
 
@@ -152,8 +154,27 @@ function setPixel(frame: PixelFrame, x: number, y: number, r: number, g: number,
   frame.pixels[offset + 2] = b;
 }
 
-export function renderMode(mode: DisplayMode): PixelFrame | AnimationFrame[] {
+export function renderMode(mode: DisplayMode, now = new Date()): PixelFrame | AnimationFrame[] {
   if (mode.type === "static-text") return renderText(mode.text);
   if (mode.type === "static-image") return fitImage(decodeImage(mode.data, mode.mimeType));
+  if (mode.type === "clock-calendar") return renderClockCalendar(now);
   return decodeGif(mode.data);
+}
+
+function drawText(frame: PixelFrame, text: string, scale: number, y: number): void {
+  const characters = [...text.toUpperCase()];
+  const width = characters.reduce((total, char) => total + (FONT[char] ?? FONT[" "]!).length * scale + scale, -scale);
+  let x = Math.floor((MATRIX_WIDTH - width) / 2);
+  for (const char of characters) {
+    const glyph = FONT[char] ?? FONT[" "]!;
+    glyph.forEach((row, glyphY) => [...row].forEach((pixel, glyphX) => {
+      if (pixel !== "1") return;
+      for (let offsetY = 0; offsetY < scale; offsetY += 1) {
+        for (let offsetX = 0; offsetX < scale; offsetX += 1) {
+          setPixel(frame, x + glyphX * scale + offsetX, y + glyphY * scale + offsetY, 255, 255, 255);
+        }
+      }
+    }));
+    x += (glyph.length + 1) * scale;
+  }
 }

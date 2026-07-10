@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-type DisplayType = "static-text" | "static-image" | "animated-image";
+type DisplayType = "static-text" | "static-image" | "animated-image" | "clock-calendar";
 type Status = {
   width: number;
   height: number;
@@ -12,7 +12,8 @@ type Status = {
 const modes: { type: DisplayType; label: string; description: string }[] = [
   { type: "static-text", label: "Static text", description: "Show centered bitmap text" },
   { type: "static-image", label: "Static image", description: "Display a PNG or JPEG" },
-  { type: "animated-image", label: "Animated image", description: "Play a GIF animation" }
+  { type: "animated-image", label: "Animated image", description: "Play a GIF animation" },
+  { type: "clock-calendar", label: "Clock / calendar", description: "Show the time, date, and weekday" }
 ];
 
 export function App() {
@@ -33,8 +34,11 @@ export function App() {
     try {
       const options: RequestInit = selectedMode === "static-text"
         ? { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text }) }
-        : { method: "POST", body: createFormData(file) };
-      const response = await fetch(`/api/matrix/modes/${selectedMode === "static-text" ? "text" : selectedMode === "static-image" ? "image" : "animation"}`, options);
+        : selectedMode === "clock-calendar"
+          ? { method: "POST" }
+          : { method: "POST", body: createFormData(file) };
+      const endpoint = selectedMode === "static-text" ? "text" : selectedMode === "static-image" ? "image" : selectedMode === "animated-image" ? "animation" : "clock-calendar";
+      const response = await fetch(`/api/matrix/modes/${endpoint}`, options);
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Unable to update the matrix");
       await refreshStatus();
@@ -90,6 +94,8 @@ export function App() {
                 <label className="block text-sm text-zinc-400">Text
                   <textarea className="mt-2 min-h-28 w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-zinc-100 outline-none focus:border-emerald-400" maxLength={64} value={text} onChange={(event) => setText(event.target.value)} placeholder="Hello, matrix!" />
                 </label>
+              ) : selectedMode === "clock-calendar" ? (
+                <p className="text-sm text-zinc-400">The matrix will show the current local time, date, and day of the week.</p>
               ) : (
                 <label className="block text-sm text-zinc-400">Upload {selectedMode === "static-image" ? "PNG or JPEG" : "GIF"}
                   <input className="mt-2 block w-full rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-300 file:mr-3 file:rounded file:border-0 file:bg-emerald-400 file:px-3 file:py-2 file:font-medium file:text-zinc-950" accept={selectedMode === "static-image" ? "image/png,image/jpeg" : "image/gif"} type="file" onChange={(event) => setFile(event.target.files?.[0])} />
@@ -109,7 +115,7 @@ export function App() {
               <span className="text-sm text-zinc-500">{status?.displayMode?.type ?? "empty"}</span>
             </div>
             <div className="mx-auto flex aspect-square max-w-[360px] items-center justify-center rounded-lg bg-black p-6 text-center shadow-inner">
-              {status?.displayMode?.type === "static-text" ? <span className="break-words text-2xl font-bold text-white">{status.displayMode.label}</span> : status?.displayMode ? <span className="text-zinc-500">{status.displayMode.label}</span> : <span className="text-zinc-700">Matrix is clear</span>}
+              {status?.displayMode?.type === "static-text" ? <span className="break-words text-2xl font-bold text-white">{status.displayMode.label}</span> : status?.displayMode?.type === "clock-calendar" ? <span className="text-center text-white"><strong className="block text-4xl">12:34</strong><span className="block text-lg">10 JUL</span><span className="block text-lg">FRIDAY</span></span> : status?.displayMode ? <span className="text-zinc-500">{status.displayMode.label}</span> : <span className="text-zinc-700">Matrix is clear</span>}
             </div>
             <label className="mt-6 block text-sm text-zinc-400">
               Brightness <span className="float-right font-medium text-zinc-200">{status?.brightness ?? 50}%</span>
