@@ -4,8 +4,21 @@ import { createRequire } from "node:module";
 type MatrixDriver = {
   clear(): void;
   brightness(value: number): void;
-  setPixel(x: number, y: number, r: number, g: number, b: number): void;
+  fill(): void;
+  fgColor(color: RgbColor): MatrixDriver;
+  setPixel(x: number, y: number): MatrixDriver;
   sync(): void;
+};
+
+type MatrixModule = {
+  LedMatrix: {
+    new (matrixOptions: Record<string, unknown>, runtimeOptions: Record<string, unknown>): MatrixDriver;
+    defaultMatrixOptions(): Record<string, unknown>;
+    defaultRuntimeOptions(): Record<string, unknown>;
+  };
+  GpioMapping: {
+    AdafruitHat: string;
+  };
 };
 
 export interface MatrixHardware {
@@ -32,17 +45,17 @@ class MatrixController implements MatrixHardware {
 
     try {
       const moduleName = "rpi-led-matrix";
-      const matrixModule = requireOptional(moduleName) as {
-        LedMatrix: new (options: Record<string, unknown>) => MatrixDriver;
-        GpioMapping: { AdafruitHat: string };
-      };
-      this.driver = new matrixModule.LedMatrix({
+      const matrixModule = requireOptional(moduleName) as MatrixModule;
+      const matrixOptions = {
+        ...matrixModule.LedMatrix.defaultMatrixOptions(),
         rows: 64,
         cols: 64,
         chainLength: 1,
         parallel: 1,
         hardwareMapping: matrixModule.GpioMapping.AdafruitHat
-      });
+      };
+      const runtimeOptions = matrixModule.LedMatrix.defaultRuntimeOptions();
+      this.driver = new matrixModule.LedMatrix(matrixOptions, runtimeOptions);
       this.mode = "hardware";
       this.driver.brightness(this.brightness);
     } catch (error) {
@@ -57,11 +70,7 @@ class MatrixController implements MatrixHardware {
 
   setColor(color: RgbColor): void {
     if (!this.driver) return;
-    for (let y = 0; y < 64; y += 1) {
-      for (let x = 0; x < 64; x += 1) {
-        this.driver.setPixel(x, y, color.r, color.g, color.b);
-      }
-    }
+    this.driver.fgColor(color).fill();
     this.driver.sync();
   }
 
@@ -71,7 +80,9 @@ class MatrixController implements MatrixHardware {
     for (let y = 0; y < frame.height; y += 1) {
       for (let x = 0; x < frame.width; x += 1) {
         const offset = (y * frame.width + x) * 3;
-        this.driver.setPixel(x, y, frame.pixels[offset], frame.pixels[offset + 1], frame.pixels[offset + 2]);
+        this.driver
+          .fgColor({ r: frame.pixels[offset], g: frame.pixels[offset + 1], b: frame.pixels[offset + 2] })
+          .setPixel(x, y);
       }
     }
     this.driver.sync();
