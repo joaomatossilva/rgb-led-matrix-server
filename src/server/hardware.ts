@@ -55,7 +55,10 @@ class MatrixController implements MatrixHardware {
         parallel: 1,
         hardwareMapping: matrixModule.GpioMapping.AdafruitHat
       };
-      const runtimeOptions = matrixModule.LedMatrix.defaultRuntimeOptions();
+      const runtimeOptions = {
+        ...matrixModule.LedMatrix.defaultRuntimeOptions(),
+        gpioSlowdown: 2 as const,
+      };
       this.driver = new matrixModule.LedMatrix(matrixOptions, runtimeOptions);
       this.mode = "hardware";
       this.driver.brightness(this.brightness);
