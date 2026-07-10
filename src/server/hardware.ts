@@ -53,7 +53,8 @@ class MatrixController implements MatrixHardware {
         cols: 64,
         chainLength: 1,
         parallel: 1,
-        hardwareMapping: matrixModule.GpioMapping.AdafruitHat
+        hardwareMapping: matrixModule.GpioMapping.AdafruitHat,
+        pwmBits: 8 as const
       };
       const runtimeOptions = {
         ...matrixModule.LedMatrix.defaultRuntimeOptions(),
