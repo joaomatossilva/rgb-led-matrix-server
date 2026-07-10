@@ -6,6 +6,7 @@ type MatrixDriver = {
   brightness(value: number): void;
   fill(): void;
   fgColor(color: RgbColor): MatrixDriver;
+  drawBuffer(buffer: Buffer, width?: number, height?: number): MatrixDriver;
   setPixel(x: number, y: number): MatrixDriver;
   sync(): void;
 };
@@ -77,14 +78,7 @@ class MatrixController implements MatrixHardware {
   renderFrame(frame: PixelFrame): void {
     this.lastFrame = frame;
     if (!this.driver) return;
-    for (let y = 0; y < frame.height; y += 1) {
-      for (let x = 0; x < frame.width; x += 1) {
-        const offset = (y * frame.width + x) * 3;
-        this.driver
-          .fgColor({ r: frame.pixels[offset], g: frame.pixels[offset + 1], b: frame.pixels[offset + 2] })
-          .setPixel(x, y);
-      }
-    }
+    this.driver.drawBuffer(Buffer.from(frame.pixels), frame.width, frame.height);
     this.driver.sync();
   }
 
